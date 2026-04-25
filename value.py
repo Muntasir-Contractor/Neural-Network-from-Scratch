@@ -1,11 +1,24 @@
 class Value:
-    def __init__(self, data, _children=(), _op="",gradient=0.0):
+    def __init__(self, data, _children=(), _op=""):
         self.data = data
         self.prev = set(_children)
         self._op = _op
-        self.gradient = gradient
+        self.grad = 0.0
         self._backward = lambda:None
 
+    def backward(self):
+        if self.grad == 0.0:
+            self.grad = 1.0
+
+        if self._op=="+":
+            self.prev[0].grad = 1.0
+            self.prev[1].grad = 1.0
+
+        if self._op=="*":
+            self.prev[0].grad = self.prev[1].data
+            self.prev[1].grad = self.prev[0].data
+
+        
 
 
     def __repr__(self):
@@ -39,4 +52,4 @@ c = a+b
 d = c + 3
 
 print(d)
-print(d.prev)
+print(a.grad)
