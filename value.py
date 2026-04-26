@@ -1,3 +1,5 @@
+import math
+
 class Value:
     def __init__(self, data, _children=(), _op=""):
         self.data = data
@@ -5,20 +7,35 @@ class Value:
         self._op = _op
         self.grad = 0.0
         self._backward = lambda:None
+    
+    def _backward(self):
+        pass
 
     def backward(self):
-        if self.grad == 0.0:
-            self.grad = 1.0
+        topo = []
+        visited = set()
 
-        if self._op=="+":
-            self.prev[0].grad = 1.0
-            self.prev[1].grad = 1.0
+        """ Even though theres already an implied tree relation with each Value and children, to avoid recomputing
+        gradient multiple times for one node, we must create a flattened list of nodes in topological order. Then
+        we can run a _backwards function call on the reverse of the topological sorted list, beginning at the last
+        (output node), going all the way to the front layer computing the gradients in respect to the output node.
+        """
+        def build_topo(node):
+            if node not in visited:
+                visited.add(node)
+                for child in node._prev:
+                    build_topo(child)
 
-        if self._op=="*":
-            self.prev[0].grad = self.prev[1].data
-            self.prev[1].grad = self.prev[0].data
+                topo.append(node)
+        build_topo(self)
 
+        self.grad = 1.0
+        for node in reversed(topo):
+            if node._backward:
+                node._backward()
         
+
+
 
 
     def __repr__(self):
@@ -42,6 +59,12 @@ class Value:
     
     def __pow__(self,other):
         pass
+
+    def tanh(self):
+        x = self.data
+        t = (math.exp(2*x) - 1)/(math.exp(2*x) + 1)
+        out = Value(t, (self, ), 'tanh')
+        return out
 
 
     
