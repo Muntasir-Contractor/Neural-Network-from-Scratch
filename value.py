@@ -7,9 +7,6 @@ class Value:
         self._op = _op
         self.grad = 0.0
         self._backward = lambda:None
-    
-    def _backward(self):
-        pass
 
     def backward(self):
         topo = []
@@ -23,7 +20,7 @@ class Value:
         def build_topo(node):
             if node not in visited:
                 visited.add(node)
-                for child in node._prev:
+                for child in node.prev:
                     build_topo(child)
 
                 topo.append(node)
@@ -42,15 +39,27 @@ class Value:
         return f"Value(data={self.data})"
     
     def __add__(self, other):
+        out = Value(self.data + other.data, (self,other), "+")
+        def _backward():
+            self.grad += 1.0 * out.grad
+            other.grad += 1.0 * out.grad
         if not isinstance(other, Value):
             return Value(self.data + other, (self,other), "+")
-
-        return Value(self.data + other.data,(self,other),"+")
+        
+        out._backward = _backward
+        return out
     
     def __mul__(self,other):
+        out = Value(self.data * other.data, (self,other), "*")
+        def _backward():
+            self.grad = other.data * out.grad
+            other.grad = self.data * out.grad
+        
         if not isinstance(other,Value):
             return Value(self.data * other, (self,other), "*")
-        return Value(self.data * other.data, (self,other),"*")
+        
+        out._backward = _backward
+        return out
     
     def __sub__(self,other):
         if not isinstance(other,Value):
@@ -64,6 +73,11 @@ class Value:
         x = self.data
         t = (math.exp(2*x) - 1)/(math.exp(2*x) + 1)
         out = Value(t, (self, ), 'tanh')
+
+        def _backward():
+            self.grad = (1-t**2)*out.grad
+
+        out._backward = _backward
         return out
 
 
@@ -71,8 +85,14 @@ class Value:
 
 a = Value(4)
 b = Value(3)
+d = Value(-2)
 c = a+b
-d = c + 3
+e = c * d
 
-print(d)
+
+e.backward()
+
+print(c.grad)
+print(d.grad)
+print(b.grad)
 print(a.grad)
