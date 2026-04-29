@@ -48,6 +48,9 @@ class Value:
         out._backward = _backward
         return out
     
+    def __radd__(self, other):
+        return self+other
+    
     def __rmul__(self,other):
         return self*other
     
@@ -103,22 +106,23 @@ class Value:
         return out
 
 
+if __name__ == "__main__":
     
 
-a = Value(4)
-b = Value(3)
-d = Value(-2)
-c = a+b
-e = c * d
-f = e**2
+    a = Value(4)
+    b = Value(3)
+    d = Value(-2)
+    c = a+b
+    e = c * d
+    f = e**2
 
 
 
 
-f.backward()
-print(f.grad)
-print(e.grad)
-print(c.grad)
-print(d.grad)
-print(b.grad)
-print(a.grad)
+    f.backward()
+    print(f.grad)
+    print(e.grad)
+    print(c.grad)
+    print(d.grad)
+    print(b.grad)
+    print(a.grad)
