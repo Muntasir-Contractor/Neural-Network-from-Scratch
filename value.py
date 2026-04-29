@@ -39,35 +39,57 @@ class Value:
         return f"Value(data={self.data})"
     
     def __add__(self, other):
+        other = other if isinstance(other, Value) else Value(other)
         out = Value(self.data + other.data, (self,other), "+")
         def _backward():
             self.grad += 1.0 * out.grad
             other.grad += 1.0 * out.grad
-        if not isinstance(other, Value):
-            return Value(self.data + other, (self,other), "+")
         
         out._backward = _backward
         return out
     
+    def __rmul__(self,other):
+        return self*other
+    
+    def exp(self):
+        x = self.data
+        out = Value(math.exp(x), (self,), 'exp')
+
+        def _backward():
+            self.grad += out.data * out.grad
+        
+        out._backward = _backward
+        return out
+    
+    def __truediv__(self, other):
+        return self * other**-1
+    
     def __mul__(self,other):
+        other = other if isinstance(other, Value) else Value(other)
         out = Value(self.data * other.data, (self,other), "*")
         def _backward():
-            self.grad = other.data * out.grad
-            other.grad = self.data * out.grad
-        
-        if not isinstance(other,Value):
-            return Value(self.data * other, (self,other), "*")
+            self.grad += other.data * out.grad
+            other.grad += self.data * out.grad
         
         out._backward = _backward
         return out
     
     def __sub__(self,other):
-        if not isinstance(other,Value):
-            return Value(self.data - other, (self,other), "-")
-        return Value(self.data - other.data, (self,other),"-")
+        other = other if isinstance(other,Value) else Value(other)
+        out = Value(self.data-other.data,(self,other),"-")
+        def _backward():
+            self.grad += 1 * out.grad
+            other.grad += -1 * out.grad
+        out._backward = _backward
+        return out
     
     def __pow__(self,other):
-        pass
+        out = Value(self.data**other, (self,),f"**{other}")
+        def _backward():
+            self.grad += other*(self.data**(other-1))* out.grad
+        out._backward = _backward
+
+        return out
 
     def tanh(self):
         x = self.data
@@ -75,7 +97,7 @@ class Value:
         out = Value(t, (self, ), 'tanh')
 
         def _backward():
-            self.grad = (1-t**2)*out.grad
+            self.grad += (1-t**2)*out.grad
 
         out._backward = _backward
         return out
@@ -88,10 +110,14 @@ b = Value(3)
 d = Value(-2)
 c = a+b
 e = c * d
+f = e**2
 
 
-e.backward()
 
+
+f.backward()
+print(f.grad)
+print(e.grad)
 print(c.grad)
 print(d.grad)
 print(b.grad)
