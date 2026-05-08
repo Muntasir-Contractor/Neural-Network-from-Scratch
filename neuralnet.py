@@ -52,6 +52,7 @@ class MLP:
                 p.grad = 0.0
             ypred = [self(x) for x in xs]
             self.loss = sum((yout - ygt)**2 for ygt,yout in zip(ys,ypred))
+            print(f"Loss: {self.loss}")
             self.loss.backward()
 
             for p in self.parameters():
@@ -72,6 +73,7 @@ xs = [
 
 ]
 n = MLP(3, [4,4,1])
-ys = [1.0,-1.0,-1.0,1.0]
-n.fit(xs,ys)
-print(n.predict(xs))
+ys = [10,-15,-15,8]
+n.fit(xs,ys,lr=0.30)
+preds = n.predict(xs)
+print(preds)

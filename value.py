@@ -67,6 +67,9 @@ class Value:
     def __truediv__(self, other):
         return self * other**-1
     
+    def __round__(self):
+        return round(self.data)
+    
     def __mul__(self,other):
         other = other if isinstance(other, Value) else Value(other)
         out = Value(self.data * other.data, (self,other), "*")
@@ -104,6 +107,11 @@ class Value:
 
         out._backward = _backward
         return out
+    
+    def relu(self):
+        def _backward():
+            pass
+        pass
 
 
 if __name__ == "__main__":
