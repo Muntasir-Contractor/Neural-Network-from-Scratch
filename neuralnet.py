@@ -2,21 +2,22 @@ from value import Value
 import random
 
 class Neuron:
-    def __init__(self, nin):
+    def __init__(self, nin,nonlin=True):
         self.w = [Value(random.uniform(-1,1)) for _ in range(nin)]
         self.b = Value(random.uniform(-1,1))
+        self.nonlin = nonlin
 
     def __call__(self,x):
         activation = sum((wi*xi for wi,xi in zip(self.w,x))) + self.b
-        out = activation.tanh()
-        return out
+        
+        return activation.tanh() if self.nonlin else activation
     
     def parameters(self):
         return self.w + [self.b]
 
 class Layer:
-    def __init__(self, nin,nout):
-        self.neurons = [Neuron(nin) for _ in range(nout)]
+    def __init__(self, nin,nout, nonlin=True):
+        self.neurons = [Neuron(nin,nonlin=nonlin) for _ in range(nout)]
 
     def __call__(self,x):
         outs = [n(x) for n in self.neurons]
@@ -34,7 +35,7 @@ class MLP:
 
     def __init__(self, nin, nouts):
         sizes = [nin] + nouts
-        self.layers = [Layer(sizes[i], sizes[i+1]) for i in range(len(nouts))]
+        self.layers = [Layer(sizes[i], sizes[i+1], nonlin=(i != len(nouts) - 1)) for i in range(len(nouts))]
         self.loss = None
 
     def __call__(self, x):
@@ -74,6 +75,6 @@ xs = [
 ]
 n = MLP(3, [4,4,1])
 ys = [10,-15,-15,8]
-n.fit(xs,ys,lr=0.30)
+n.fit(xs,ys,lr=0.01)
 preds = n.predict(xs)
 print(preds)
